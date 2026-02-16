@@ -2,16 +2,11 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { BibleStudy, QuizQuestion } from "../types";
 
-// Acesso seguro à API_KEY verificando a existência do objeto process
-const getApiKey = () => {
-  try {
-    return (window as any).process?.env?.API_KEY || "";
-  } catch (e) {
-    return "";
-  }
-};
+// No Netlify, a API_KEY deve ser configurada nas Environment Variables do painel.
+// O código abaixo tenta pegar de process.env ou de uma variável global segura.
+const API_KEY = (typeof process !== 'undefined' && process.env?.API_KEY) || (window as any).process?.env?.API_KEY || "";
 
-const ai = new GoogleGenAI({ apiKey: getApiKey() });
+const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 export const fetchDailyStudy = async (theme?: string): Promise<BibleStudy> => {
   const prompt = theme 
