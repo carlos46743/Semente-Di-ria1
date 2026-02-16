@@ -1,100 +1,78 @@
-
 import React, { useState, useEffect } from 'react';
 import { fetchDailyQuiz } from '../services/geminiService';
 import { QuizQuestion } from '../types';
-import { Trophy, HelpCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Trophy, HelpCircle, RefreshCw } from 'lucide-react';
 
 const QuizView: React.FC = () => {
   const [quiz, setQuiz] = useState<QuizQuestion | null>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<number | null>(null);
-  const [showExplanation, setShowExplanation] = useState(false);
 
-  useEffect(() => {
-    loadNewQuiz();
-  }, []);
-
-  const loadNewQuiz = async () => {
+  const load = async () => {
     setLoading(true);
     setSelected(null);
-    setShowExplanation(false);
     try {
-      const data = await fetchDailyQuiz();
-      setQuiz(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+      setQuiz(await fetchDailyQuiz());
+    } catch (e) {}
+    setLoading(false);
   };
 
-  const handleSelect = (idx: number) => {
-    if (selected !== null) return;
-    setSelected(idx);
-    setShowExplanation(true);
-  };
+  useEffect(() => { load(); }, []);
 
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-      <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
-      <p className="text-stone-500 font-medium italic">Consultando os pergaminhos...</p>
-    </div>
-  );
+  if (loading) return <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+    <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+    <p className="text-stone-400 italic">Preparando desafio...</p>
+  </div>;
 
   return (
-    <div className="max-w-xl mx-auto space-y-8 animate-in zoom-in-95 duration-300">
-      <header className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-700 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4">
-          <Trophy size={14} /> Quiz do Dia
+    <div className="max-w-xl mx-auto space-y-10 animate-in zoom-in-95 duration-500">
+      <header className="text-center space-y-4">
+        <div className="bg-amber-100 text-amber-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-inner">
+          <Trophy size={32} />
         </div>
-        <h2 className="text-2xl font-bold text-stone-800 leading-tight">
+        <h2 className="text-2xl md:text-3xl font-bold text-stone-800 leading-tight">
           {quiz?.question}
         </h2>
       </header>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {quiz?.options.map((opt, idx) => {
           const isCorrect = idx === quiz.correctIndex;
           const isSelected = selected === idx;
-          let variant = "bg-white border-stone-200 hover:border-amber-200 text-stone-700";
-          
-          if (showExplanation) {
-            if (isCorrect) variant = "bg-emerald-50 border-emerald-500 text-emerald-900 ring-2 ring-emerald-500/20";
-            else if (isSelected) variant = "bg-rose-50 border-rose-500 text-rose-900 ring-2 ring-rose-500/20";
-            else variant = "bg-white border-stone-100 text-stone-300";
+          const revealed = selected !== null;
+
+          let style = "bg-white border-stone-200 text-stone-700 hover:border-amber-300";
+          if (revealed) {
+            if (isCorrect) style = "bg-emerald-50 border-emerald-500 text-emerald-900";
+            else if (isSelected) style = "bg-rose-50 border-rose-500 text-rose-900";
+            else style = "bg-white border-stone-100 text-stone-300 opacity-50";
           }
 
           return (
             <button
               key={idx}
-              disabled={showExplanation}
-              onClick={() => handleSelect(idx)}
-              className={`w-full p-6 rounded-2xl border-2 transition-all flex items-center justify-between text-left group ${variant}`}
+              disabled={revealed}
+              onClick={() => setSelected(idx)}
+              className={`w-full p-6 rounded-3xl border-2 transition-all flex items-center justify-between text-left group ${style}`}
             >
-              <span className="font-medium text-lg">{opt}</span>
-              {showExplanation && isCorrect && <CheckCircle2 className="text-emerald-600" size={24} />}
-              {showExplanation && isSelected && !isCorrect && <XCircle className="text-rose-600" size={24} />}
+              <span className="font-semibold text-lg">{opt}</span>
+              {revealed && isCorrect && <CheckCircle2 className="text-emerald-600" size={24} />}
+              {revealed && isSelected && !isCorrect && <XCircle className="text-rose-600" size={24} />}
             </button>
           );
         })}
       </div>
 
-      {showExplanation && (
-        <div className="bg-stone-50 rounded-3xl p-8 border border-stone-100 animate-in slide-in-from-top-4">
-          <h4 className="font-bold text-stone-800 mb-2 flex items-center gap-2">
-            <HelpCircle size={18} className="text-amber-500" />
-            Explicação
-          </h4>
-          <p className="text-stone-600 leading-relaxed italic">
-            {quiz?.explanation}
-          </p>
-          <div className="pt-6 flex justify-center">
-             <button 
-              onClick={loadNewQuiz}
-              className="bg-amber-500 hover:bg-amber-600 text-white px-8 py-3 rounded-full font-bold shadow-lg transition-all transform active:scale-95"
-             >
-               Próxima Pergunta
-             </button>
+      {selected !== null && (
+        <div className="bg-stone-900 text-white rounded-[32px] p-8 space-y-4 animate-in slide-in-from-top-4">
+          <div className="flex items-center gap-2 text-amber-400 font-bold uppercase tracking-widest text-xs">
+            <HelpCircle size={16} /> Por que?
+          </div>
+          <p className="text-stone-300 leading-relaxed italic">{quiz?.explanation}</p>
+          <div className="pt-4">
+            <button onClick={load} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-emerald-900/40 hover:bg-emerald-500 transition-all flex items-center justify-center gap-2">
+              <RefreshCw size={18} /> Próximo Desafio
+            </button>
           </div>
         </div>
       )}

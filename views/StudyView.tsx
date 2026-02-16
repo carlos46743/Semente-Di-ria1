@@ -1,139 +1,67 @@
-
 import React, { useState, useEffect } from 'react';
 import { fetchDailyStudy } from '../services/geminiService';
 import { BibleStudy } from '../types';
-import { CheckCircle, MessageSquare, PenTool, Share2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Sparkles, Heart, MessageSquare, Send } from 'lucide-react';
 
 const StudyView: React.FC = () => {
   const [study, setStudy] = useState<BibleStudy | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [note, setNote] = useState("");
-  const [saved, setSaved] = useState(false);
-
-  const loadData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchDailyStudy();
-      setStudy(data);
-    } catch (e: any) {
-      console.error(e);
-      setError("Não foi possível carregar o estudo detalhado no momento.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    loadData();
+    fetchDailyStudy().then(setStudy).finally(() => setLoading(false));
   }, []);
 
-  const handleSaveNote = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  };
-
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh]">
-      <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-      <p className="text-stone-500">Mergulhando nas Escrituras...</p>
-    </div>
-  );
-
-  if (error) return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center space-y-6">
-      <div className="bg-rose-50 p-6 rounded-full text-rose-500">
-        <AlertCircle size={48} />
-      </div>
-      <h3 className="text-xl font-bold text-stone-800">{error}</h3>
-      <button 
-        onClick={loadData}
-        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-full font-bold transition-all shadow-md"
-      >
-        <RefreshCw size={20} /> Tentar Novamente
-      </button>
-    </div>
-  );
+  if (loading) return <div className="animate-pulse space-y-8">
+    <div className="h-12 bg-stone-200 rounded-2xl w-3/4 mx-auto"></div>
+    <div className="h-64 bg-stone-200 rounded-3xl"></div>
+  </div>;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-10 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-2xl mx-auto space-y-12 pb-20 animate-in fade-in duration-1000">
       <header className="text-center space-y-4">
-        <span className="bg-emerald-100 text-emerald-700 px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wide">
-          Estudo Profundo
-        </span>
+        <div className="inline-flex bg-amber-100 text-amber-700 px-4 py-1 rounded-full text-xs font-bold uppercase">Mergulho Profundo</div>
         <h2 className="text-4xl font-serif font-bold text-stone-900">{study?.theme}</h2>
-        <p className="text-emerald-600 font-bold text-lg">{study?.reference}</p>
+        <p className="text-emerald-600 font-bold">{study?.reference}</p>
       </header>
 
-      <section className="bg-white rounded-3xl p-8 border border-stone-100 shadow-sm space-y-4">
-        <h3 className="text-lg font-bold flex items-center gap-2 text-stone-800">
-          <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-            <CheckCircle size={18} />
-          </div>
-          Contexto e Entendimento
-        </h3>
-        <p className="text-stone-600 leading-relaxed text-lg">
-          {study?.context}
-        </p>
-      </section>
+      <section className="space-y-6">
+        <div className="bg-white rounded-3xl p-8 border border-stone-100 shadow-sm space-y-4">
+          <h3 className="font-bold text-stone-800 flex items-center gap-2">
+            <Sparkles className="text-amber-500" size={20} /> Contexto Histórico
+          </h3>
+          <p className="text-stone-600 leading-relaxed text-lg italic">{study?.context}</p>
+        </div>
 
-      <section className="bg-emerald-50 rounded-3xl p-8 space-y-4">
-        <h3 className="text-lg font-bold flex items-center gap-2 text-emerald-900">
-          <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white">
-            <PenTool size={18} />
-          </div>
-          Aplicação Prática
-        </h3>
-        <p className="text-emerald-800 leading-relaxed italic">
-          "{study?.application}"
-        </p>
+        <div className="bg-emerald-50 rounded-3xl p-8 border border-emerald-100 space-y-4">
+          <h3 className="font-bold text-emerald-900 flex items-center gap-2">
+            <Heart className="text-emerald-500 fill-emerald-500" size={20} /> Aplicação Prática
+          </h3>
+          <p className="text-emerald-800 leading-relaxed text-lg">{study?.application}</p>
+        </div>
       </section>
 
       <section className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-bold text-stone-800 flex items-center gap-2">
-            <MessageSquare size={18} className="text-stone-400" />
-            Suas Reflexões
-          </h3>
-          <button 
-            onClick={() => {
-              navigator.share?.({
-                title: 'Semente Diária',
-                text: `${study?.verse} - ${study?.reference}`,
-              }).catch(console.error);
-            }}
-            className="text-stone-500 hover:text-emerald-600 transition-colors"
-          >
-            <Share2 size={20} />
-          </button>
-        </div>
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="O que Deus falou ao seu coração hoje?"
-          className="w-full h-40 p-6 rounded-2xl border-2 border-stone-100 focus:border-emerald-200 focus:ring-0 outline-none transition-all text-stone-700 resize-none bg-stone-50/50"
-        />
-        <div className="flex justify-end">
-          <button 
-            onClick={handleSaveNote}
-            className={`px-8 py-3 rounded-full font-bold transition-all transform active:scale-95 ${
-              saved ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md'
-            }`}
-          >
-            {saved ? 'Salvo no Diário!' : 'Salvar Reflexão'}
+        <label className="font-bold text-stone-800 flex items-center gap-2 px-2">
+          <MessageSquare size={18} /> Sua Reflexão
+        </label>
+        <div className="relative">
+          <textarea 
+            placeholder="O que esta palavra ensina para você hoje?" 
+            className="w-full h-40 p-6 rounded-3xl border-2 border-stone-100 focus:border-emerald-200 outline-none transition-all text-lg bg-white resize-none"
+          />
+          <button className="absolute bottom-4 right-4 bg-emerald-600 text-white p-3 rounded-2xl shadow-lg hover:bg-emerald-700 transition-colors">
+            <Send size={20} />
           </button>
         </div>
       </section>
 
-      <section className="bg-stone-900 text-stone-100 rounded-3xl p-10 text-center space-y-6 shadow-2xl">
-        <h3 className="text-emerald-400 font-bold uppercase tracking-widest text-sm">Oração de Hoje</h3>
-        <p className="text-2xl font-serif italic leading-relaxed opacity-90">
+      <section className="bg-emerald-950 text-white rounded-[40px] p-10 md:p-16 text-center space-y-8 relative overflow-hidden shadow-2xl">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-amber-400 to-emerald-500"></div>
+        <h3 className="text-emerald-400 font-bold uppercase tracking-widest text-sm">Oração do Dia</h3>
+        <p className="text-2xl md:text-3xl font-serif italic leading-snug opacity-90">
           "{study?.prayer}"
         </p>
-        <div className="pt-4">
-          <span className="text-stone-500 italic">— Amém.</span>
-        </div>
+        <p className="text-emerald-500 font-serif italic text-xl pt-4">— Amém.</p>
       </section>
     </div>
   );
