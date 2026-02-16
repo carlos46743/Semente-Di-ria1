@@ -15,7 +15,11 @@
         font-family: 'Playfair+Display', serif;
       }
     </style>
-  <script type="importmap">
+    <script>
+      // Polyfill para process.env para evitar crash em ambientes de produção como Netlify
+      window.process = window.process || { env: {} };
+    </script>
+    <script type="importmap">
 {
   "imports": {
     "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
@@ -26,8 +30,8 @@
     "lucide-react": "https://esm.sh/lucide-react@^0.564.0"
   }
 }
-</script>
-</head>
+    </script>
+  </head>
   <body class="bg-stone-50 text-stone-900">
     <div id="root"></div>
   </body>

@@ -2,8 +2,16 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { BibleStudy, QuizQuestion } from "../types";
 
-const API_KEY = process.env.API_KEY || "";
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+// Acesso seguro à API_KEY verificando a existência do objeto process
+const getApiKey = () => {
+  try {
+    return (window as any).process?.env?.API_KEY || "";
+  } catch (e) {
+    return "";
+  }
+};
+
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 export const fetchDailyStudy = async (theme?: string): Promise<BibleStudy> => {
   const prompt = theme 
