@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { BibleStudy, QuizQuestion } from "../types";
 
@@ -14,11 +13,8 @@ const extractJson = (text: string) => {
 };
 
 const getAiInstance = () => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("Chave de API (API_KEY) não encontrada. Verifique as configurações do ambiente.");
-  }
-  return new GoogleGenAI({ apiKey });
+  // A chave é injetada automaticamente, deixamos o SDK lidar com a falta dela inicialmente
+  return new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 };
 
 export const fetchDailyStudy = async (theme?: string): Promise<BibleStudy> => {
@@ -29,7 +25,7 @@ export const fetchDailyStudy = async (theme?: string): Promise<BibleStudy> => {
       : "Gere um estudo bíblico diário inspirador.";
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.5-flash-lite-latest",
       contents: prompt,
       config: {
         systemInstruction: `Você é um mentor bíblico sábio. Responda ESTRITAMENTE em formato JSON puro, sem markdown.
@@ -58,7 +54,7 @@ export const fetchDailyQuiz = async (): Promise<QuizQuestion> => {
   try {
     const ai = getAiInstance();
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.5-flash-lite-latest",
       contents: "Gere um quiz bíblico desafiador em JSON.",
       config: {
         systemInstruction: `Gere apenas JSON: { "question": "pergunta", "options": ["A", "B", "C", "D"], "correctIndex": 0-3, "explanation": "explicação" }`,

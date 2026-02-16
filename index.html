@@ -19,8 +19,9 @@
       ::-webkit-scrollbar-thumb { background: #e7e5e4; border-radius: 10px; }
     </style>
     <script>
-      // Garante que o process.env não quebre a renderização inicial
-      window.process = window.process || { env: {} };
+      // Garante que o process.env exista sem sobrescrever valores reais
+      if (!window.process) window.process = { env: {} };
+      if (!window.process.env) window.process.env = {};
     </script>
     <script type="importmap">
     {

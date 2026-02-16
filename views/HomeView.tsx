@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Play, Star, Calendar, Volume2, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
+import { Play, Star, Calendar, Volume2, ArrowRight, AlertCircle, RefreshCw, Key } from 'lucide-react';
 import { fetchDailyStudy, generateAudio, decodeAudioData } from '../services/geminiService';
 import { BibleStudy } from '../types';
 
@@ -9,24 +8,54 @@ const HomeView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [hasKey, setHasKey] = useState<boolean>(true);
+
+  const checkKey = async () => {
+    // @ts-ignore
+    const keySelected = await window.aistudio.hasSelectedApiKey();
+    setHasKey(keySelected);
+    return keySelected;
+  };
+
+  const handleOpenKeySelector = async () => {
+    // @ts-ignore
+    await window.aistudio.openSelectKey();
+    setHasKey(true);
+    // Procedemos para carregar após a seleção
+    load();
+  };
 
   const load = async () => {
     setLoading(true);
     setError(null);
+    
+    const keyOk = await checkKey();
+    if (!keyOk) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const data = await fetchDailyStudy();
       setStudy(data);
     } catch (e: any) {
       console.error("UI Error Catch:", e);
-      // Tenta extrair a mensagem de erro da API ou usa uma genérica
-      const msg = e.message || "Não foi possível conectar com o servidor celestial.";
-      setError(msg);
+      const msg = e.message || "";
+      
+      // Regra de negócio: Se o erro indicar que a entidade não foi encontrada (chave inválida ou projeto errado)
+      if (msg.includes("Requested entity was not found") || msg.includes("API_KEY")) {
+        setHasKey(false);
+      } else {
+        setError(msg || "Não foi possível conectar com o servidor celestial.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const handleAudio = async () => {
     if (!study || playing) return;
@@ -46,6 +75,31 @@ const HomeView: React.FC = () => {
     }
   };
 
+  // Estado: Falta de Chave API
+  if (!hasKey && !loading) return (
+    <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 text-center space-y-8 animate-in fade-in duration-500">
+      <div className="bg-amber-50 p-6 rounded-[40px] text-amber-500">
+        <Key size={64} className="animate-float" />
+      </div>
+      <div className="max-w-md space-y-4">
+        <h3 className="text-2xl font-serif font-bold text-stone-800">Conecte sua Luz</h3>
+        <p className="text-stone-500 leading-relaxed">
+          Para gerar reflexões personalizadas e estudos profundos com IA, você precisa selecionar sua chave API do Google Gemini.
+        </p>
+        <div className="bg-stone-100 p-4 rounded-2xl text-xs text-stone-400 text-left">
+          Dica: Use um projeto faturado (paid project) para acesso completo. Visite 
+          <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" className="text-emerald-600 underline ml-1">docs de faturamento</a>.
+        </div>
+      </div>
+      <button 
+        onClick={handleOpenKeySelector} 
+        className="group flex items-center gap-3 bg-emerald-600 text-white px-10 py-4 rounded-3xl font-bold shadow-xl shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all"
+      >
+        Vincular Chave API <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+      </button>
+    </div>
+  );
+
   if (loading) return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-6 text-stone-400">
       <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin shadow-inner"></div>
@@ -61,7 +115,7 @@ const HomeView: React.FC = () => {
         <div className="bg-stone-100 p-4 rounded-2xl text-stone-600 text-sm font-mono break-words">
           {error}
         </div>
-        <p className="text-stone-500 text-sm italic">Isso pode ocorrer por instabilidade na rede ou configuração da chave de API.</p>
+        <p className="text-stone-500 text-sm italic">Isso pode ocorrer por instabilidade na rede ou expiração da sessão.</p>
       </div>
       <button onClick={load} className="flex items-center gap-2 bg-emerald-600 text-white px-8 py-3 rounded-full font-bold shadow-lg active:scale-95 transition-all">
         <RefreshCw size={18} /> Tentar Novamente
