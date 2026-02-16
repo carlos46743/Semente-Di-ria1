@@ -1,17 +1,31 @@
 
 import React, { useState, useEffect } from 'react';
-import { Play, Calendar, Star, TrendingUp, BookOpen, Award } from 'lucide-react';
+import { Play, Calendar, Star, TrendingUp, BookOpen, Award, AlertCircle, RefreshCw } from 'lucide-react';
 import { fetchDailyStudy, generateAudioDevotional, decodeAudioData } from '../services/geminiService';
 import { BibleStudy } from '../types';
 
 const HomeView: React.FC = () => {
   const [study, setStudy] = useState<BibleStudy | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
 
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchDailyStudy();
+      setStudy(data);
+    } catch (e: any) {
+      console.error(e);
+      setError("Não foi possível carregar o estudo hoje. Verifique sua conexão ou a chave da API.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Load favorites from localStorage
     const savedFavorites = localStorage.getItem('bible_favorites');
     if (savedFavorites) {
       try {
@@ -20,18 +34,7 @@ const HomeView: React.FC = () => {
         console.error("Failed to parse favorites", e);
       }
     }
-
-    const load = async () => {
-      try {
-        const data = await fetchDailyStudy();
-        setStudy(data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    loadData();
   }, []);
 
   const handlePlayAudio = async () => {
@@ -57,14 +60,12 @@ const HomeView: React.FC = () => {
 
   const toggleFavorite = () => {
     if (!study) return;
-    
     let newFavorites: string[];
     if (isFavorited) {
       newFavorites = favorites.filter(ref => ref !== study.reference);
     } else {
       newFavorites = [...favorites, study.reference];
     }
-    
     setFavorites(newFavorites);
     localStorage.setItem('bible_favorites', JSON.stringify(newFavorites));
   };
@@ -73,6 +74,24 @@ const HomeView: React.FC = () => {
     <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
       <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
       <p className="text-stone-500 font-medium italic">Preparando seu alimento espiritual...</p>
+    </div>
+  );
+
+  if (error) return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center space-y-6">
+      <div className="bg-rose-50 p-6 rounded-full text-rose-500">
+        <AlertCircle size={48} />
+      </div>
+      <div className="space-y-2 max-w-sm">
+        <h3 className="text-xl font-bold text-stone-800">Ops! Algo deu errado</h3>
+        <p className="text-stone-500 leading-relaxed">{error}</p>
+      </div>
+      <button 
+        onClick={loadData}
+        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-full font-bold transition-all transform active:scale-95 shadow-md"
+      >
+        <RefreshCw size={20} /> Tentar Novamente
+      </button>
     </div>
   );
 
@@ -123,7 +142,7 @@ const HomeView: React.FC = () => {
         </div>
       </section>
 
-      {/* Progress & Stats */}
+      {/* Stats and other sections... */}
       <section className="grid md:grid-cols-2 gap-4">
         <div className="bg-emerald-50 rounded-2xl p-6 flex items-center gap-4">
           <div className="bg-emerald-600 text-white p-3 rounded-xl">
@@ -141,24 +160,6 @@ const HomeView: React.FC = () => {
           <div>
             <p className="text-amber-900/60 text-sm font-bold uppercase tracking-wider">Nível Espiritual</p>
             <p className="text-2xl font-bold text-amber-900">Explorador da Palavra</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Quick Access */}
-      <section className="space-y-4">
-        <h3 className="text-xl font-bold text-stone-800">Próximos Passos</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-            <h4 className="font-bold text-stone-800 mb-2">Desafio: 7 dias sem murmuração</h4>
-            <div className="w-full bg-stone-100 h-2 rounded-full overflow-hidden">
-              <div className="bg-emerald-500 h-full w-[40%]"></div>
-            </div>
-            <p className="text-xs text-stone-500 mt-2">Dia 3 de 7 • 40% concluído</p>
-          </div>
-          <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-            <h4 className="font-bold text-stone-800 mb-2">Plano: Ansiedade e Paz</h4>
-            <p className="text-sm text-stone-500">Continue sua leitura de hoje sobre como entregar suas preocupações.</p>
           </div>
         </div>
       </section>

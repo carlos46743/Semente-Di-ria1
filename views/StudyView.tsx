@@ -2,26 +2,31 @@
 import React, { useState, useEffect } from 'react';
 import { fetchDailyStudy } from '../services/geminiService';
 import { BibleStudy } from '../types';
-import { CheckCircle, MessageSquare, PenTool, Share2 } from 'lucide-react';
+import { CheckCircle, MessageSquare, PenTool, Share2, AlertCircle, RefreshCw } from 'lucide-react';
 
 const StudyView: React.FC = () => {
   const [study, setStudy] = useState<BibleStudy | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [saved, setSaved] = useState(false);
 
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchDailyStudy();
+      setStudy(data);
+    } catch (e: any) {
+      console.error(e);
+      setError("Não foi possível carregar o estudo detalhado no momento.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await fetchDailyStudy();
-        setStudy(data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    loadData();
   }, []);
 
   const handleSaveNote = () => {
@@ -36,6 +41,21 @@ const StudyView: React.FC = () => {
     </div>
   );
 
+  if (error) return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center space-y-6">
+      <div className="bg-rose-50 p-6 rounded-full text-rose-500">
+        <AlertCircle size={48} />
+      </div>
+      <h3 className="text-xl font-bold text-stone-800">{error}</h3>
+      <button 
+        onClick={loadData}
+        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-full font-bold transition-all shadow-md"
+      >
+        <RefreshCw size={20} /> Tentar Novamente
+      </button>
+    </div>
+  );
+
   return (
     <div className="max-w-2xl mx-auto space-y-10 animate-in fade-in duration-500 pb-12">
       <header className="text-center space-y-4">
@@ -46,7 +66,6 @@ const StudyView: React.FC = () => {
         <p className="text-emerald-600 font-bold text-lg">{study?.reference}</p>
       </header>
 
-      {/* Context */}
       <section className="bg-white rounded-3xl p-8 border border-stone-100 shadow-sm space-y-4">
         <h3 className="text-lg font-bold flex items-center gap-2 text-stone-800">
           <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
@@ -59,7 +78,6 @@ const StudyView: React.FC = () => {
         </p>
       </section>
 
-      {/* Application */}
       <section className="bg-emerald-50 rounded-3xl p-8 space-y-4">
         <h3 className="text-lg font-bold flex items-center gap-2 text-emerald-900">
           <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white">
@@ -72,7 +90,6 @@ const StudyView: React.FC = () => {
         </p>
       </section>
 
-      {/* Reflection & Notes */}
       <section className="space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-bold text-stone-800 flex items-center gap-2">
@@ -109,7 +126,6 @@ const StudyView: React.FC = () => {
         </div>
       </section>
 
-      {/* Prayer */}
       <section className="bg-stone-900 text-stone-100 rounded-3xl p-10 text-center space-y-6 shadow-2xl">
         <h3 className="text-emerald-400 font-bold uppercase tracking-widest text-sm">Oração de Hoje</h3>
         <p className="text-2xl font-serif italic leading-relaxed opacity-90">
