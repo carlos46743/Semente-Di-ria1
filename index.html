@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
@@ -16,8 +15,9 @@
       }
     </style>
     <script>
-      // Polyfill crucial para evitar "process is not defined" em hospedagens como Netlify
-      window.process = { env: { API_KEY: "" } };
+      // Safe polyfill for process.env to avoid reference errors in the browser
+      window.process = window.process || {};
+      window.process.env = window.process.env || {};
     </script>
     <script type="importmap">
 {
@@ -34,7 +34,6 @@
   </head>
   <body class="bg-stone-50 text-stone-900">
     <div id="root"></div>
-    <!-- Script de entrada que estava faltando -->
-    <script type="module" src="./index.tsx"></script>
+    <script type="module" src="index.tsx"></script>
   </body>
 </html>

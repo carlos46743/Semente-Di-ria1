@@ -1,14 +1,9 @@
-
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { BibleStudy, QuizQuestion } from "../types";
 
-// No Netlify, a API_KEY deve ser configurada nas Environment Variables do painel.
-// O código abaixo tenta pegar de process.env ou de uma variável global segura.
-const API_KEY = (typeof process !== 'undefined' && process.env?.API_KEY) || (window as any).process?.env?.API_KEY || "";
-
-const ai = new GoogleGenAI({ apiKey: API_KEY });
-
 export const fetchDailyStudy = async (theme?: string): Promise<BibleStudy> => {
+  // Initialize inside the function to avoid top-level crashes
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const prompt = theme 
     ? `Crie um estudo bíblico profundo sobre o tema: ${theme}.`
     : "Gere um estudo bíblico diário inspirador.";
@@ -46,6 +41,7 @@ export const fetchDailyStudy = async (theme?: string): Promise<BibleStudy> => {
 };
 
 export const fetchDailyQuiz = async (): Promise<QuizQuestion> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: "Gere uma pergunta de quiz bíblico desafiadora mas educativa.",
@@ -69,6 +65,7 @@ export const fetchDailyQuiz = async (): Promise<QuizQuestion> => {
 };
 
 export const generateAudioDevotional = async (text: string): Promise<Uint8Array> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
     contents: [{ parts: [{ text: `Leia este devocional de forma calma e inspiradora: ${text}` }] }],
