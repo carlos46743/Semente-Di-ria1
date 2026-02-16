@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Copy of Semente Diária - Estudo Bíblico & Devocional",
+  "description": "Um companheiro espiritual diário com estudos guiados por IA, planos temáticos, áudio devocionais e desafios interativos para fortalecer sua fé.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
